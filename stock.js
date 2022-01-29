@@ -18,14 +18,14 @@ function myMoney (ns) {
 function process(ns, comp) {
 	let pos = ns.stock.getPosition(comp);
 	let money = myMoney(ns)
-	if (pos[1] > 0) sellAll(ns, comp, pos[0]);
-	else if (money > 500000000) buyAll(ns, comp, money);
+	if (pos[0] > 0) sellAll(ns, comp, pos[0]);
+	else if (money > 100000000) buyAll(ns, comp, money);
 }
 
 function buyAll(ns, comp, money) {
-	let shares = Math.floor(money / ns.stock.getAskPrice(comp));
+	let shares = Math.floor(money / ns.stock.getAskPrice(comp)) - 10;
 	if (shares > ns.stock.getMaxShares(comp)) shares = ns.stock.getMaxShares(comp);
-	if (ns.stock.getForecast(comp) > 0.5) ns.stock.buy(comp, shares);
+	if (ns.stock.getForecast(comp) > 0.523) ns.stock.buy(comp, shares);
 }
 
 function sellAll(ns, comp, shares) {

@@ -1,25 +1,23 @@
 /** @param {NS} ns **/
 export async function main(ns) {
-	ns.disableLog("hack");
-	ns.disableLog("getHackingLevel");
-	ns.disableLog("getServerRequiredHackingLevel");
-	ns.disableLog("run");
-	ns.disableLog("getServerNumPortsRequired");
+	ns.disableLog("ALL");
 
-	if (!ns.fileExists("AllServers.txt")) ns.run("scanallserver.js");
-	while (ns.isRunning("scanallserver.js")) await ns.sleep(1000);
-	var server = ns.read("AllServers.txt").split(",");
-	
+	var server = scanServers(ns);
+
 	for (let index = 0; server.length > 0; index = (++index) % server.length) {
-		if (ns.getServerRequiredHackingLevel(server[index]) <= ns.getHackingLevel() && ns.getServerNumPortsRequired(server[index]) <= myPorts(ns)) {
+		let hackingLevel = ns.getPlayer().hacking;
+		let serverStat = ns.getServer(server[index]);
+		if (serverStat.requiredHackingSkill <= hackingLevel && serverStat.numOpenPortsRequired <= myPorts(ns) && serverStat.minDifficulty + 0.1 > serverStat.hackDifficulty) {
 			ns.print("hacking ", server[index]);
-			await ns.write("hackserver.txt", server[index], "w");
-			while (ns.isRunning("hack-server.js", "home")) await ns.hack("n00dles");
-			ns.run("hack-server.js");
+			ns.run("hack-server.js", 1, server[index]);
 			server.splice(index, 1);
 			index--;
+		} else if (serverStat.requiredHackingSkill <= hackingLevel && serverStat.numOpenPortsRequired <= myPorts(ns) && !ns.isRunning("weaken.js", server[index])) {
+			ns.print("gw ", server[index]);
+			ns.run("gw-server.js", 1, server[index]);
+			if (ns.getServerMaxRam(server[index]) == 0) server.splice(index, 1);
 		}
-		await ns.hack("n00dles");
+		await ns.sleep(500);
 	}
 }
 
@@ -31,4 +29,21 @@ function myPorts(ns) {
 	if (ns.fileExists("HTTPWorm.exe")) count++;
 	if (ns.fileExists("SQLInject.exe")) count++;
 	return count;
+}
+
+function scanServers(ns) {
+	let servers = ["home"]
+
+	ns.disableLog("scan");
+
+	for (let i = 0; i < servers.length; i++) {
+		let scanned = ns.scan(servers[i]);
+		for (let each of scanned) {
+			if (servers.indexOf(each) === -1 && !each.startsWith("hacknet")) servers.push(each);
+		}
+	}
+
+	servers.shift();
+
+	return servers;
 }
